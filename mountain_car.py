@@ -19,8 +19,8 @@ LR = 1e-3
 env = gym.make("MountainCar-v0")
 env.reset()
 goal_steps = 300
-score_requirement = -90
-initial_games = 1000
+score_requirement = -180
+initial_games = 100
 
 
 # training data
@@ -46,6 +46,7 @@ def initial_population():
         first = 0
         # for each frame in 300
         for i in range(goal_steps):
+            # env.render()
             # just something for it to do when prev_observation is null
             if first == 0:
                 action = 0
@@ -87,11 +88,11 @@ def initial_population():
                 # print("Got here")
                 # convert to one-hot (this is the output layer for our neural network)
                 if data[1] == 1:
-                    output = [0, 1]
+                    output = [2, 0, 1]
                 elif data[1] == 0:
-                    output = [2, 0]
+                    output = [1, 2, 0]
                 elif data[1] == 2:
-                    output = [0, 2]
+                    output = [1, 0, 2]
 
                 # saving our training data
                 training_data.append([data[0], output])
@@ -140,7 +141,7 @@ def neural_network_model(input_size):
     network = fully_connected(network, 64, activation='relu')
     network = dropout(network, 0.8)
 
-    network = fully_connected(network, 2, activation='softmax')
+    network = fully_connected(network, 3, activation='softmax')
     network = regression(network, optimizer='adam', learning_rate=LR, loss='categorical_crossentropy', name='targets')
     model = tflearn.DNN(network, tensorboard_dir='log')
 
@@ -158,7 +159,7 @@ def train_model(training_data, model=False):
     if not model:
         model = neural_network_model(input_size=len(X[0]))
 
-    model.fit({'input': X}, {'targets': y}, n_epoch=5, snapshot_step=500, show_metric=True, run_id='openai_learning')
+    model.fit({'input': X}, {'targets': y}, n_epoch=3, snapshot_step=500, show_metric=True, run_id='openai_learning')
     return model
 
 
@@ -188,8 +189,14 @@ for each_game in range(10):
         prev_obs = new_observation
         game_memory.append([new_observation, action])
         score += reward
-        if done:
+        if i == 200 and forcer == False or i == 999:
+            forcer = False
+        elif i < 1000:
+            forcer = True
+        elif done:
             break
+        # if done:
+        #     break
     scores.append(score)
 
 
